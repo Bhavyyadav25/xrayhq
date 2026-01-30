@@ -1,4 +1,4 @@
-module github.com/xrayhq/xrayhq
+module github.com/Bhavyyadav25/xrayhq
 
 go 1.25.6
 

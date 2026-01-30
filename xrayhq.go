@@ -1,3 +1,28 @@
+// Package xrayhq is a lightweight, drop-in observability library for Go web
+// applications. It provides request tracing, database query instrumentation,
+// external call tracking, and a real-time dashboard — all with zero external
+// dependencies for storage.
+//
+// xrayhq captures detailed per-request traces including latency, TTFB,
+// request/response bodies, headers, DB queries (database/sql, GORM),
+// Redis commands, MongoDB operations, and outbound HTTP calls. It
+// automatically detects N+1 queries, slow routes, high error rates,
+// memory spikes, and panics via a built-in alert engine.
+//
+// # Quick Start
+//
+//	func main() {
+//	    xrayhq.Init(xrayhq.WithPort(":9090"))
+//	    handler := xrayhq.Wrap(yourMux)
+//	    http.ListenAndServe(":8080", handler)
+//	}
+//
+// The dashboard is then available at http://localhost:9090.
+//
+// # Framework Support
+//
+// xrayhq includes middleware for Chi, Echo, Gin, and Fiber in addition
+// to the standard net/http middleware.
 package xrayhq
 
 import (

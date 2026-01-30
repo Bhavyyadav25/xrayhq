@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/xrayhq/xrayhq"
+	"github.com/Bhavyyadav25/xrayhq"
 )
 
 func main() {
