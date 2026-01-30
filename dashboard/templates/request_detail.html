@@ -1,0 +1,305 @@
+{{define "request_detail.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <a href="javascript:history.back()" class="back-link">&larr; Back</a>
+    <h2>Request Detail</h2>
+    <span class="request-id">{{.Trace.ID}}</span>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <span class="stat-value"><span class="method-badge method-{{.Trace.Method}}">{{.Trace.Method}}</span></span>
+        <span class="stat-label">Method</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{.Trace.Path}}</span>
+        <span class="stat-label">Path</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value"><span class="status-code {{statusClass .Trace.ResponseStatus}}">{{.Trace.ResponseStatus}}</span></span>
+        <span class="stat-label">Status</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{formatDuration .Trace.Latency}}</span>
+        <span class="stat-label">Total Latency</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{formatDuration .Trace.TTFB}}</span>
+        <span class="stat-label">TTFB</span>
+    </div>
+</div>
+
+{{if .Trace.Panicked}}
+<div class="alert alert-critical">
+    <strong>PANIC RECOVERED</strong>
+    <pre>{{.Trace.PanicValue}}</pre>
+    <details>
+        <summary>Stack Trace</summary>
+        <pre class="stack-trace">{{.Trace.PanicStack}}</pre>
+    </details>
+</div>
+{{end}}
+
+{{if .Trace.Alerts}}
+<div class="card">
+    <h3>Alerts</h3>
+    {{range .Trace.Alerts}}
+    <div class="alert alert-{{.Severity}}">
+        <span class="alert-type">{{.Type}}</span>
+        {{.Message}}
+    </div>
+    {{end}}
+</div>
+{{end}}
+
+<div class="grid-2">
+    <div class="card">
+        <h3>Request</h3>
+        <div class="detail-group">
+            <div class="detail-row">
+                <span class="detail-label">URL</span>
+                <span class="detail-value">{{.Trace.Path}}{{if .Trace.QueryParams}}?{{.Trace.QueryParams}}{{end}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Route Pattern</span>
+                <span class="detail-value">{{.Trace.RoutePattern}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Client IP</span>
+                <span class="detail-value">{{.Trace.ClientIP}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">User Agent</span>
+                <span class="detail-value">{{.Trace.UserAgent}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Size</span>
+                <span class="detail-value">{{formatBytes .Trace.RequestSize}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Time</span>
+                <span class="detail-value">{{formatDateTime .Trace.StartTime}}</span>
+            </div>
+        </div>
+        {{if .Trace.RequestHeaders}}
+        <details>
+            <summary>Headers</summary>
+            <div class="headers-list">
+                {{range $k, $v := .Trace.RequestHeaders}}
+                <div class="header-item"><span class="header-key">{{$k}}</span>: {{$v}}</div>
+                {{end}}
+            </div>
+        </details>
+        {{end}}
+        {{if .Trace.RequestBody}}
+        <details>
+            <summary>Body</summary>
+            <pre class="body-content">{{printf "%s" .Trace.RequestBody}}</pre>
+        </details>
+        {{end}}
+    </div>
+
+    <div class="card">
+        <h3>Response</h3>
+        <div class="detail-group">
+            <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="detail-value"><span class="status-code {{statusClass .Trace.ResponseStatus}}">{{.Trace.ResponseStatus}}</span></span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Size</span>
+                <span class="detail-value">{{formatBytes .Trace.ResponseSize}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Latency</span>
+                <span class="detail-value">{{formatDuration .Trace.Latency}}</span>
+            </div>
+        </div>
+        {{if .Trace.ResponseHeaders}}
+        <details>
+            <summary>Headers</summary>
+            <div class="headers-list">
+                {{range $k, $v := .Trace.ResponseHeaders}}
+                <div class="header-item"><span class="header-key">{{$k}}</span>: {{$v}}</div>
+                {{end}}
+            </div>
+        </details>
+        {{end}}
+        {{if .Trace.ResponseBody}}
+        <details>
+            <summary>Body</summary>
+            <pre class="body-content">{{printf "%s" .Trace.ResponseBody}}</pre>
+        </details>
+        {{end}}
+    </div>
+</div>
+
+<div class="card">
+    <h3>Runtime</h3>
+    <div class="stats-row">
+        <div class="stat-card stat-sm">
+            <span class="stat-value">{{.Trace.GoroutinesBefore}} &rarr; {{.Trace.GoroutinesAfter}}</span>
+            <span class="stat-label">Goroutines</span>
+        </div>
+        <div class="stat-card stat-sm">
+            <span class="stat-value">{{memDelta .Trace.MemAllocBefore .Trace.MemAllocAfter}}</span>
+            <span class="stat-label">Memory Delta</span>
+        </div>
+    </div>
+</div>
+
+<!-- Timeline Waterfall -->
+<div class="card">
+    <h3>Timeline Waterfall</h3>
+    <div class="waterfall">
+        <div class="waterfall-row">
+            <span class="waterfall-label">Handler</span>
+            <div class="waterfall-bar-container">
+                <div class="waterfall-bar bar-handler" style="left: 0%; width: 100%;">
+                    {{formatDuration .Trace.Latency}}
+                </div>
+            </div>
+        </div>
+        {{range .Trace.DBQueries}}
+        <div class="waterfall-row">
+            <span class="waterfall-label" title="{{.Query}}">DB: {{truncate .Query 40}}</span>
+            <div class="waterfall-bar-container">
+                <div class="waterfall-bar bar-db" style="left: {{timelinePercent .Timestamp $.Trace.StartTime $.Trace.Latency}}%; width: {{durationPercent .Duration $.Trace.Latency}}%;">
+                    {{formatDuration .Duration}}
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{range .Trace.ExternalCalls}}
+        <div class="waterfall-row">
+            <span class="waterfall-label" title="{{.URL}}">HTTP: {{truncate .URL 40}}</span>
+            <div class="waterfall-bar-container">
+                <div class="waterfall-bar bar-ext" style="left: {{timelinePercent .Timestamp $.Trace.StartTime $.Trace.Latency}}%; width: {{durationPercent .Duration $.Trace.Latency}}%;">
+                    {{formatDuration .Duration}}
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{range .Trace.RedisOps}}
+        <div class="waterfall-row">
+            <span class="waterfall-label">Redis: {{.Command}} {{.Key}}</span>
+            <div class="waterfall-bar-container">
+                <div class="waterfall-bar bar-redis" style="left: {{timelinePercent .Timestamp $.Trace.StartTime $.Trace.Latency}}%; width: {{durationPercent .Duration $.Trace.Latency}}%;">
+                    {{formatDuration .Duration}}
+                </div>
+            </div>
+        </div>
+        {{end}}
+        {{range .Trace.MongoOps}}
+        <div class="waterfall-row">
+            <span class="waterfall-label">Mongo: {{.Operation}} {{.Collection}}</span>
+            <div class="waterfall-bar-container">
+                <div class="waterfall-bar bar-mongo" style="left: {{timelinePercent .Timestamp $.Trace.StartTime $.Trace.Latency}}%; width: {{durationPercent .Duration $.Trace.Latency}}%;">
+                    {{formatDuration .Duration}}
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+{{if .Trace.DBQueries}}
+<div class="card">
+    <h3>Database Queries ({{len .Trace.DBQueries}}) — Total: {{formatDuration .Trace.TotalDBTime}}</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Query</th>
+                <th>Duration</th>
+                <th>Rows</th>
+                <th>Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Trace.DBQueries}}
+            <tr>
+                <td><code>{{.Query}}</code></td>
+                <td>{{formatDuration .Duration}}</td>
+                <td>{{.RowsAffected}}</td>
+                <td class="text-danger">{{.Error}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
+
+{{if .Trace.ExternalCalls}}
+<div class="card">
+    <h3>External Calls ({{len .Trace.ExternalCalls}}) — Total: {{formatDuration .Trace.TotalExtTime}}</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Method</th>
+                <th>URL</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Trace.ExternalCalls}}
+            <tr>
+                <td>{{.Method}}</td>
+                <td>{{.URL}}</td>
+                <td><span class="status-code {{statusClass .StatusCode}}">{{.StatusCode}}</span></td>
+                <td>{{formatDuration .Duration}}</td>
+                <td class="text-danger">{{.Error}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
+
+{{if .Trace.RedisOps}}
+<div class="card">
+    <h3>Redis Operations ({{len .Trace.RedisOps}}) — Total: {{formatDuration .Trace.TotalRedisTime}}</h3>
+    <table class="data-table">
+        <thead>
+            <tr><th>Command</th><th>Key</th><th>Duration</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+            {{range .Trace.RedisOps}}
+            <tr>
+                <td><code>{{.Command}}</code></td>
+                <td>{{.Key}}</td>
+                <td>{{formatDuration .Duration}}</td>
+                <td class="text-danger">{{.Error}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
+
+{{if .Trace.MongoOps}}
+<div class="card">
+    <h3>MongoDB Operations ({{len .Trace.MongoOps}}) — Total: {{formatDuration .Trace.TotalMongoTime}}</h3>
+    <table class="data-table">
+        <thead>
+            <tr><th>Operation</th><th>Collection</th><th>Filter</th><th>Duration</th><th>Error</th></tr>
+        </thead>
+        <tbody>
+            {{range .Trace.MongoOps}}
+            <tr>
+                <td>{{.Operation}}</td>
+                <td>{{.Collection}}</td>
+                <td><code>{{.Filter}}</code></td>
+                <td>{{formatDuration .Duration}}</td>
+                <td class="text-danger">{{.Error}}</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,103 @@
+{{define "live_tail.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <h2>Live Tail</h2>
+    <div class="live-controls">
+        <button id="toggleBtn" class="btn btn-primary" onclick="toggleStream()">Pause</button>
+        <input type="text" id="filterRoute" placeholder="Filter by route..." class="input-filter" oninput="applyFilter()">
+        <input type="number" id="filterStatus" placeholder="Status code..." class="input-filter input-sm" oninput="applyFilter()">
+        <input type="number" id="filterLatency" placeholder="Min latency (ms)..." class="input-filter input-sm" oninput="applyFilter()">
+    </div>
+</div>
+
+<div class="card">
+    <table class="data-table" id="liveTable">
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Status</th>
+                <th>Latency</th>
+                <th>DB Queries</th>
+            </tr>
+        </thead>
+        <tbody id="liveBody">
+            <tr id="emptyRow">
+                <td colspan="6" class="empty-state">Waiting for requests...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+let streaming = true;
+let eventSource = null;
+
+function startStream() {
+    eventSource = new EventSource('/events');
+    eventSource.onmessage = function(event) {
+        if (!streaming) return;
+
+        const data = JSON.parse(event.data);
+        const emptyRow = document.getElementById('emptyRow');
+        if (emptyRow) emptyRow.remove();
+
+        const tbody = document.getElementById('liveBody');
+        const row = document.createElement('tr');
+        row.className = 'clickable-row live-row';
+        row.setAttribute('data-route', data.path);
+        row.setAttribute('data-status', data.status);
+        row.setAttribute('data-latency', data.latency);
+        row.onclick = function() { window.location = '/request/' + data.id; };
+        row.innerHTML = `
+            <td>${data.timestamp}</td>
+            <td><span class="method-badge method-${data.method}">${data.method}</span></td>
+            <td>${data.path}</td>
+            <td><span class="status-code ${data.statusClass}">${data.status}</span></td>
+            <td>${data.latencyFmt}</td>
+            <td>${data.dbQueries}</td>
+        `;
+
+        tbody.insertBefore(row, tbody.firstChild);
+
+        // Keep max 200 rows
+        while (tbody.children.length > 200) {
+            tbody.removeChild(tbody.lastChild);
+        }
+
+        applyFilter();
+    };
+}
+
+function toggleStream() {
+    streaming = !streaming;
+    document.getElementById('toggleBtn').textContent = streaming ? 'Pause' : 'Resume';
+    document.getElementById('toggleBtn').className = streaming ? 'btn btn-primary' : 'btn btn-secondary';
+}
+
+function applyFilter() {
+    const route = document.getElementById('filterRoute').value.toLowerCase();
+    const status = document.getElementById('filterStatus').value;
+    const minLatency = parseInt(document.getElementById('filterLatency').value) || 0;
+
+    document.querySelectorAll('.live-row').forEach(row => {
+        const rowRoute = row.getAttribute('data-route').toLowerCase();
+        const rowStatus = row.getAttribute('data-status');
+        const rowLatency = parseInt(row.getAttribute('data-latency'));
+
+        let show = true;
+        if (route && !rowRoute.includes(route)) show = false;
+        if (status && rowStatus !== status) show = false;
+        if (minLatency && rowLatency < minLatency) show = false;
+
+        row.style.display = show ? '' : 'none';
+    });
+}
+
+startStream();
+</script>
+{{end}}

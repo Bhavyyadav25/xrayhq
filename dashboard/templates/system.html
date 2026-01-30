@@ -1,0 +1,74 @@
+{{define "system.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <h2>System Overview</h2>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card">
+        <span class="stat-value">{{uptimeFormat .Uptime}}</span>
+        <span class="stat-label">Uptime</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{.RequestCount}}</span>
+        <span class="stat-label">Total Requests</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{.RouteCount}}</span>
+        <span class="stat-label">Routes</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{.Mode}}</span>
+        <span class="stat-label">Mode</span>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="card">
+        <h3>Runtime</h3>
+        <div class="detail-group">
+            <div class="detail-row">
+                <span class="detail-label">Goroutines</span>
+                <span class="detail-value">{{.Goroutines}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Memory Allocated</span>
+                <span class="detail-value">{{formatBytesUint .MemAlloc}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Total Allocated</span>
+                <span class="detail-value">{{formatBytesUint .MemTotalAlloc}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">System Memory</span>
+                <span class="detail-value">{{formatBytesUint .MemSys}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">GC Runs</span>
+                <span class="detail-value">{{.NumGC}}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Last GC</span>
+                <span class="detail-value">{{formatDateTime .LastGC}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Configuration</h3>
+        <div class="detail-group">
+            <div class="detail-row">
+                <span class="detail-label">Buffer Size</span>
+                <span class="detail-value">{{.BufferSize}} requests</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Mode</span>
+                <span class="detail-value">{{.Mode}}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

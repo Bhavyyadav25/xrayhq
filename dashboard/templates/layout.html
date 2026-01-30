@@ -1,0 +1,42 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>xrayhq — API Observability</title>
+    <link rel="stylesheet" href="/dashboard/static/style.css">
+    <script src="/dashboard/static/chart.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <h1>xrayhq</h1>
+            <span class="badge">{{.RequestCount}} reqs</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="{{if eq .Page "routes"}}active{{end}}">
+                <a href="/">Routes</a>
+            </li>
+            <li class="{{if eq .Page "live"}}active{{end}}">
+                <a href="/live">Live Tail</a>
+            </li>
+            <li class="{{if eq .Page "alerts"}}active{{end}}">
+                <a href="/alerts">Alerts {{if .ActiveAlerts}}<span class="alert-badge">{{.ActiveAlerts}}</span>{{end}}</a>
+            </li>
+            <li class="{{if eq .Page "system"}}active{{end}}">
+                <a href="/system">System</a>
+            </li>
+        </ul>
+        <div class="sidebar-footer">
+            <a href="/xrayhq/export?format=json" class="btn btn-sm">Export JSON</a>
+            <a href="/xrayhq/export?format=csv" class="btn btn-sm">Export CSV</a>
+        </div>
+    </nav>
+    <main class="content">
+        {{template "content" .}}
+    </main>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,33 @@
+{{define "alerts.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <h2>Alerts</h2>
+    <span class="badge">{{len .Alerts}} total</span>
+</div>
+
+{{if .Alerts}}
+<div class="alerts-list">
+    {{range .Alerts}}
+    <div class="alert-card {{severityClass .Severity}}">
+        <div class="alert-header">
+            <span class="alert-severity {{severityClass .Severity}}">{{.Severity}}</span>
+            <span class="alert-type-badge">{{.Type}}</span>
+            <span class="alert-time">{{formatDateTime .Timestamp}}</span>
+        </div>
+        <div class="alert-message">{{.Message}}</div>
+        <div class="alert-meta">
+            {{if .RoutePattern}}<span>Route: {{.RoutePattern}}</span>{{end}}
+            {{if .RequestID}}<a href="/request/{{.RequestID}}">View Request &rarr;</a>{{end}}
+        </div>
+    </div>
+    {{end}}
+</div>
+{{else}}
+<div class="card">
+    <div class="empty-state">No alerts detected. Everything looks healthy!</div>
+</div>
+{{end}}
+{{end}}

@@ -1,0 +1,58 @@
+{{define "routes.html"}}
+{{template "layout" .}}
+{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <h2>Routes Overview</h2>
+    <div class="stats-row">
+        <div class="stat-card">
+            <span class="stat-value">{{len .Routes}}</span>
+            <span class="stat-label">Routes</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{.RequestCount}}</span>
+            <span class="stat-label">Total Requests</span>
+        </div>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><a href="?sort=method">Method</a></th>
+                <th><a href="?sort=route">Route Pattern</a></th>
+                <th><a href="?sort=hits">Hits</a></th>
+                <th><a href="?sort=avg">Avg Latency</a></th>
+                <th><a href="?sort=p95">P95</a></th>
+                <th><a href="?sort=p99">P99</a></th>
+                <th><a href="?sort=errors">Error Rate</a></th>
+                <th>Avg DB Queries</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range .Routes}}
+            <tr class="clickable-row {{healthClass .Status}}" onclick="window.location='/route/{{.Method}}/{{.Pattern}}'">
+                <td><span class="method-badge method-{{.Method}}">{{.Method}}</span></td>
+                <td class="route-pattern">{{.Pattern}}</td>
+                <td>{{.TotalRequests}}</td>
+                <td>{{formatDuration .AvgLatency}}</td>
+                <td>{{formatDuration .P95}}</td>
+                <td>{{formatDuration .P99}}</td>
+                <td class="{{if gt .ErrorRate 10.0}}text-danger{{else if gt .ErrorRate 5.0}}text-warning{{end}}">
+                    {{formatPercent .ErrorRate}}
+                </td>
+                <td>{{formatFloat .AvgDBQueries}}</td>
+                <td><span class="status-dot {{healthClass .Status}}"></span> {{.Status}}</td>
+            </tr>
+            {{else}}
+            <tr>
+                <td colspan="9" class="empty-state">No requests captured yet. Start making API calls!</td>
+            </tr>
+            {{end}}
+        </tbody>
+    </table>
+</div>
+{{end}}
